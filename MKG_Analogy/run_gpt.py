@@ -7,9 +7,10 @@ from utils import *
 from retrieval import *
 from prompt_builder import *
 import argparse
+import random
+random.seed(42)
 
 client = OpenAI()
-
 
 # Get Metric
 def get_metrics(rankings, answers):
@@ -104,9 +105,11 @@ if __name__ == "__main__":
         
     entity2text = read_txt("dataset/MarKG/entity2text.txt")
     relation2text = read_txt("dataset/MarKG/relation2text.txt")
-    candidates = []
-    for sample in test_samples[:100]:
-        candidates.append(entity2text[sample["answer"]])
+    all_candidates = []
+    for sample in test_samples:
+        all_candidates.append(entity2text[sample["answer"]])
+    
+    
     test_samples = random.sample(test_samples, 5)
     
     # Retriever Build
@@ -129,6 +132,14 @@ if __name__ == "__main__":
             retrieved_items = retriever.search([sample["example"][0], sample["example"][1], sample["question"]], 3, sample["mode"])
             rag_prompt = build_rag_prompt(retrieved_items, entity2text, relation2text)
             content = rag_prompt + content
+        
+        # Ranking Sample
+        all_candidates.remove(entity2text[sample["answer"]])
+        candidates = random.sample(all_candidates, 19)
+        candidates.append(entity2text[sample["answer"]])
+        random.shuffle(candidates)
+        all_candidates.append(entity2text[sample["answer"]])
+        
         rankings.append(rank_candidates_with_gpt(content, candidates)["ranking"])
         answers.append(entity2text[sample["answer"]])
         print(answers[-1], rankings[-1])
