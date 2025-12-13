@@ -14,10 +14,12 @@ class MedicalVQADataset():
     def __init__(self, 
                  dataset_name: str,
                  split: str,
+                 is_close = 1,
                  val_split = 0.1):
 
         self.samples = []
-        
+        self.is_close = is_close
+
         if dataset_name.lower() == 'slake':
             self._load_slake(split)
         elif dataset_name.lower() == 'vqa_rad':
@@ -29,13 +31,19 @@ class MedicalVQADataset():
 
         print(f"Loaded {len(self.samples)} samples from {dataset_name} for {split} split")
 
-    def _process_answer(self, answer: str):
+    def _process_answer(self, answer: str, is_close = 1):
         answer = str(answer).lower().strip()
-        if answer in ['yes', 'true']:
-            return 1
-        elif answer in ['no', 'false']:
-            return 0
-        return None
+
+        if is_close:
+            if answer in ['yes', 'true']:
+                return 1
+            elif answer in ['no', 'false']:
+                return 0
+            return None
+
+        if answer in ['yes', 'true', 'no', 'false']:
+            return None
+        return answer
 
     def _load_slake(self, split: str):
         base_path = "MEDVQA/Slake/Slake1.0"
@@ -45,7 +53,7 @@ class MedicalVQADataset():
             data = json.load(f)
         for item in data:
             if item.get("q_lang") == "en":
-                binary_answer = self._process_answer(item['answer'])
+                binary_answer = self._process_answer(item['answer'], is_close=self.is_close)
                 if binary_answer is not None:
                     image_path = os.path.join(base_path, 'imgs', item['img_name'])
                     if os.path.exists(image_path):
@@ -64,7 +72,7 @@ class MedicalVQADataset():
             data = json.load(f)
         yes_no_samples = []
         for item in data:
-            binary_answer = self._process_answer(item['answer'])
+            binary_answer = self._process_answer(item['answer'], is_close=self.is_close)
             if binary_answer is not None:
                 image_path = os.path.join(base_path, 'images', item['image_name'])
                 if os.path.exists(image_path):
@@ -87,7 +95,7 @@ class MedicalVQADataset():
         hf_split = {'train': 'train', 'val': 'validation', 'test': 'test'}[split]
         dataset = load_dataset("flaviagiammarino/path-vqa")[hf_split]
         for item in dataset:
-            binary_answer = self._process_answer(item['answer'])
+            binary_answer = self._process_answer(item['answer'], is_close=self.is_close)
             if binary_answer is not None:
                 image = item['image']
                 if image.mode == 'CMYK':

@@ -22,10 +22,12 @@ if __name__ == "__main__":
     parser.add_argument('--retriever', type=str, default="SimpleMultimodalRetriever", help='Retriever') 
     # 'slake', 'vqa_rad', 'pathvqa'
     parser.add_argument("--dataset", type=str, default='slake')
+    # "open", "close"
+    parser.add_argument("--type", type=str, default='open')
 
     args = parser.parse_args()
 
-    vqa_data = MedicalVQADataset(args.dataset, split="test")
+    vqa_data = MedicalVQADataset(args.dataset, split="test", is_close = (1 if args.type == "close" else 0))
 
     if args.retriever == "SimpleMultimodalRetriever":
         retriever = SimpleMultimodalRetriever(kg_path="MedMKG_huggingface/MedMKG.csv", image_map_path="MedMKG_huggingface/image_mapping.csv", model_name="clip-ViT-B-32")
@@ -38,12 +40,18 @@ if __name__ == "__main__":
     answers = []
 
     for sample in vqa_data.samples[:10]:
-        prompt = build_multimodal_input_for_sample(sample)
+        if args.type == "close":
+            prompt = build_multimodal_input_for_sample_close(sample)
+        else:
+            prompt = build_multimodal_input_for_sample_open(sample)
         if args.retriever:
             retrieved_items = retriever.search(sample, 3)
             rag_prompt = build_rag_prompt(retrieved_items, retriever.image_id_to_path)
             prompt[1]["content"] = rag_prompt + prompt[1]["content"]
-        outputs.append(int(get_gpt_result(prompt)))
-        answers.append(int(sample["answer"]))
+        outputs.append(get_gpt_result(prompt))
+        answers.append(sample["answer"])
 
-    print(compute_metrics(answers, outputs))
+    if args.type == "close":
+        print(compute_metrics_close(answers, outputs))
+    else:
+        print(compute_metrics_open(answers, outputs))

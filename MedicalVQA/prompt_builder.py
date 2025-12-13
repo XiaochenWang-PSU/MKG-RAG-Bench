@@ -24,8 +24,8 @@ def img_to_data_url(img):
     b64 = base64.b64encode(buf.getvalue()).decode("utf-8")
     return f"data:image/jpeg;base64,{b64}"
 
-# Build Prompt
-def build_multimodal_input_for_sample(sample):
+# Build Prompt for close-ended question
+def build_multimodal_input_for_sample_close(sample):
 
     if "image_path" in sample:
         img_url = path_to_data_url(sample["image_path"])
@@ -52,6 +52,37 @@ def build_multimodal_input_for_sample(sample):
                 {
                     "type": "input_text",
                     "text": f"Question: {sample['question']}\nAnswer with 1 for yes/true or 0 for no/false.",
+                },
+            ],
+        },
+    ]
+
+# Build Prompt for open-ened question
+def build_multimodal_input_for_sample_open(sample):
+
+    if "image_path" in sample:
+        img_url = path_to_data_url(sample["image_path"])
+    else:
+        img_url = img_to_data_url(sample["image"])
+
+    return [
+        {
+            "role": "system",
+            "content": (
+                "You are a medical visual question answering model. "
+                "Answer the question using a short, direct answer. "
+                "Use as few words as possible (prefer 1-10 words). "
+                "Do NOT provide reasoning, steps, or explanations. "
+                "Do NOT add extra commentary. "
+            ),
+        },
+        {
+            "role": "user",
+            "content": [
+                {"type": "input_image", "image_url": img_url},
+                {
+                    "type": "input_text",
+                    "text": f"Question: {sample['question']}\nAnswer concisely.",
                 },
             ],
         },
