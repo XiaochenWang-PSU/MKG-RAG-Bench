@@ -4,7 +4,9 @@ import json
 import argparse
 import random
 from tqdm import tqdm
+from prompt_builder import *
 from utils import *
+from retrieval import *
 from datasets import load_dataset
 import openai
 from openai import OpenAI
@@ -116,7 +118,7 @@ def parse_args():
     # user options
     parser.add_argument('--label', type=str, default='exp0')
     parser.add_argument('--test_split', type=str, default='val', choices=['test', 'val', 'minival'])
-    parser.add_argument('--test_number', type=int, default=3, help='GPT-3 is expensive. -1 for whole val/test set')
+    parser.add_argument('--test_number', type=int, default=10, help='GPT-3 is expensive. -1 for whole val/test set')
     parser.add_argument('--use_caption', action='store_true', help='use image captions or not')
     parser.add_argument('--save_every', type=int, default=3, help='Save the result with every n examples.')
     parser.add_argument('--debug', action='store_true')
@@ -141,8 +143,12 @@ def parse_args():
     parser.add_argument('--top_p', type=float, default=1.0)
     parser.add_argument('--frequency_penalty', type=float, default=0.0)
     parser.add_argument('--presence_penalty', type=float, default=0.0)
-    parser.add_argument('--llm', type=str, default="qwen")
-
+    parser.add_argument('--llm', type=str, default="gpt") # "gpt" or "qwen"
+    
+    # Retrieval
+    # "SimpleMultimodalRetriever" or "SimpleTextRetriever" or "RandomRetriever" or None
+    parser.add_argument('--retriever', type=str, default="SimpleMultimodalRetriever", help='Retriever') 
+    
     args = parser.parse_args()
     return args
 
@@ -160,6 +166,20 @@ if __name__ == "__main__":
 
     test, shots = load_data(args)
     result_file = get_result_file(args)
+
+    # MarKG Retriever Build
+    triplets = load_triplets("dataset/MarKG/wiki_tuple_ids.txt")
+    triplets = random.sample(triplets, 10)
+
+    entity2text = read_txt("dataset/MarKG/entity2text.txt")
+    relation2text = read_txt("dataset/MarKG/relation2text.txt")
+
+    if args.retriever == "SimpleMultimodalRetriever":
+        retriever = SimpleMultimodalRetriever(triplets, entity2text, relation2text, "clip-ViT-B-32")
+    elif args.retriever == "SimpleTextRetriever":
+        retriever = SimpleTextRetriever(triplets, entity2text, relation2text, "sentence-transformers/all-MiniLM-L6-v2")
+    elif args.retriever == "RandomRetriever":
+        retriever = RandomRetriever(triplets)
 
     # Load checkpoint
     if os.path.exists(result_file):
@@ -190,6 +210,11 @@ if __name__ == "__main__":
 
         segments = build_segments_multimodal(shots, problem, args)
 
+        if args.retriever:
+            retrieved_items = retriever.search(problem, 3)
+            rag_prompt = build_rag_prompt(retrieved_items, entity2text, relation2text)
+            segments = rag_prompt + segments
+
         if args.llm.lower() == "gpt":
             prediction, output = get_gpt_result_interleaved(segments, args)
         elif args.llm.lower() == "qwen":
@@ -207,7 +232,6 @@ if __name__ == "__main__":
 
         if args.debug or qid < 3:
             print("##################################")
-            print(segments, "\n")
             print("# labeled answer:", label)
             print("# predicted answer:", prediction)
             print("# predicted index:", pred_idx)

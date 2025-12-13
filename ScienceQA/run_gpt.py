@@ -4,7 +4,7 @@ import json
 import argparse
 import random
 from tqdm import tqdm
-from utils import *
+from prompt_builder import *
 
 import openai
 from openai import OpenAI
