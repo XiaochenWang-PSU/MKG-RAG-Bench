@@ -146,8 +146,8 @@ def parse_args():
     parser.add_argument('--llm', type=str, default="gpt") # "gpt" or "qwen"
     
     # Retrieval
-    # "SimpleMultimodalRetriever" or "SimpleTextRetriever" or "RandomRetriever" or None
-    parser.add_argument('--retriever', type=str, default="SimpleMultimodalRetriever", help='Retriever') 
+    # "SimpleMultimodalRetriever" or "SimpleTextRetriever" or "RandomRetriever" or "CaptionRetriever" or None
+    parser.add_argument('--retriever', type=str, default="CaptionRetriever", help='Retriever') 
     
     args = parser.parse_args()
     return args
@@ -180,6 +180,8 @@ if __name__ == "__main__":
         retriever = SimpleTextRetriever(triplets, entity2text, relation2text, "sentence-transformers/all-MiniLM-L6-v2")
     elif args.retriever == "RandomRetriever":
         retriever = RandomRetriever(triplets)
+    elif args.retriever == "CaptionRetriever":
+        retriever = CaptionRetriever(triplets, entity2text, relation2text, "sentence-transformers/all-MiniLM-L6-v2")
 
     # Load checkpoint
     if os.path.exists(result_file):
