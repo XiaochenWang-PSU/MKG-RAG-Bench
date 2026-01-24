@@ -848,7 +848,7 @@ class CaptionRetriever(BaseRetriever):
         self.text_idx2triplet_idx = []
 
         for idx, triplet in enumerate(self.triplets):
-            if "image_" in triplet.head_name.lower():
+            if "image_" not in triplet.head_name.lower():
                 text = (
                     triplet.head_name.lower()
                     + " "
