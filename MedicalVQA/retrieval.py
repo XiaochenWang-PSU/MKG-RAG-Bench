@@ -2,12 +2,14 @@ import os
 from typing import List, Dict, Any, Tuple
 from PIL import Image
 from utils import *
+from typing import *
 import torch
 import numpy as np
 import numpy
 import torch
 import random
 from sentence_transformers import SentenceTransformer
+from transformers import BlipProcessor, BlipForConditionalGeneration
 import pandas as pd
 from dataclasses import dataclass
 from pathlib import Path
@@ -740,6 +742,7 @@ class SimpleMultimodalRetriever(BaseRetriever):
                 }
             )
         return out
+
 class SimpleTextRetriever(BaseRetriever):
     def __init__(self, kg_path: str, image_map_path: str = "image_mapping.csv",
                  model_name="clip-ViT-B-32", batch_size=32):
@@ -815,8 +818,6 @@ class SimpleTextRetriever(BaseRetriever):
 
         return out
 
-
-
 class RandomRetriever(BaseRetriever):
     def search(self, sample, k):
         random_idx = random.sample([i for i in range(len(self.triplets))], k)
@@ -830,4 +831,99 @@ class RandomRetriever(BaseRetriever):
                 "score": rank + 1,
             })
         
+        return out
+
+class CaptionRetriever(BaseRetriever):
+    def __init__(self, kg_path: str, image_map_path: str = "image_mapping.csv",
+                 model_name="clip-ViT-B-32", batch_size=32):
+        super().__init__(kg_path, image_map_path)
+        processor = BlipProcessor.from_pretrained("Salesforce/blip-image-captioning-base")
+        model = BlipForConditionalGeneration.from_pretrained("Salesforce/blip-image-captioning-base")
+
+        self.device = "cuda" if torch.cuda.is_available() else "cpu"
+        self.model = SentenceTransformer(model_name, device=self.device)
+
+        self.texts = []
+        # mapping: index in self.texts / self.retrieval_embeddings -> index in self.triplets
+        self.text_idx2triplet_idx = []
+
+        for idx, triplet in enumerate(self.triplets):
+            if "image_" in triplet.head_name.lower():
+                text = (
+                    triplet.head_name.lower()
+                    + " "
+                    + triplet.relation.lower()
+                    + " "
+                    + triplet.tail_name.lower()
+                )
+            else:
+                head_caption = ""
+                # attach image path if exists
+                if (
+                    triplet.head in self.image_id_to_path
+                    and os.path.exists(self.image_id_to_path[triplet.head])
+                ):
+                    # unconditional image captioning
+                    inputs = processor(Image.open(self.image_id_to_path[triplet.head]).convert("RGB"), return_tensors="pt")
+
+                    out = model.generate(**inputs)
+                    head_caption = str(processor.decode(out[0], skip_special_tokens=True))
+                text = (
+                    head_caption.lower()
+                    + " "
+                    + triplet.relation.lower()
+                    + " "
+                    + triplet.tail_name.lower()
+                )
+
+            self.texts.append(text)
+            self.text_idx2triplet_idx.append(idx)
+
+        self.retrieval_embeddings = self.model.encode(
+            self.texts,
+            batch_size=batch_size,
+            convert_to_tensor=True,
+            show_progress_bar=False,
+        )
+        print(self.retrieval_embeddings.shape)
+
+        # Normalize for cosine similarity via dot product
+        self.retrieval_embeddings = torch.nn.functional.normalize(
+            self.retrieval_embeddings, p=2, dim=1
+        ) 
+
+    def search(self, sample, k):
+        query_text = sample["question"].lower()
+
+        query_embedding = self.model.encode(
+            [query_text],
+            convert_to_tensor=True,
+            show_progress_bar=False,
+        )
+        query_embedding = torch.nn.functional.normalize(
+            query_embedding, p=2, dim=1
+        )
+
+        scores = (self.retrieval_embeddings @ query_embedding.T).flatten()
+
+        # guard in case k > #candidates
+        k = min(k, scores.shape[0])
+
+        vals, idxs = torch.topk(scores, k=k, largest=True, sorted=True)
+
+        out = []
+        for rank, (i, s) in enumerate(zip(idxs.tolist(), vals.tolist()), start=1):
+            # i indexes into self.texts / self.retrieval_embeddings
+            triplet_idx = self.text_idx2triplet_idx[i]  # map back to original triplet index
+            triplet = self.triplets[triplet_idx]
+
+            out.append(
+                {
+                    "rank": rank,
+                    "index": triplet_idx,  # index in the original triplet list
+                    "item": triplet,
+                    "score": float(s),
+                }
+            )
+
         return out
