@@ -65,5 +65,5 @@ if __name__ == "__main__":
 
         outputs.append(get_gpt_result(prompt).lower().strip())
         answers.append(questions[question_id]['answer'].lower().strip())
-        break
+
     print(compute_accuracy(outputs, answers))
