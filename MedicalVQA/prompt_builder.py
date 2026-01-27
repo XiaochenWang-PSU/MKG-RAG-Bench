@@ -9,6 +9,7 @@ def path_to_data_url(path):
         # (Optional) downscale very large images to save tokens:
         im.thumbnail((1024, 1024))
         buf = io.BytesIO()
+        im = im.convert("RGB")
         im.save(buf, format="JPEG")
 
     b64 = base64.b64encode(buf.getvalue()).decode("utf-8")
@@ -79,6 +80,10 @@ def build_multimodal_input_for_sample_open(sample):
         {
             "role": "user",
             "content": [
+                {
+                    "type": "input_text",
+                    "text": "Now, given an image, please answer the question.",
+                },
                 {"type": "input_image", "image_url": img_url},
                 {
                     "type": "input_text",

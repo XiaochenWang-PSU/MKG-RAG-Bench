@@ -77,6 +77,7 @@ def create_one_example(format, question, context, choice, answer, lecture, solut
 
     # Outputs
     if test_example:
+        input = "Now, please answer the question." + input
         output = "Answer:"
     elif output_format == 'A':
         output = f"Answer: The answer is {answer}."

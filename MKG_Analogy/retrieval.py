@@ -570,21 +570,21 @@ class SimpleMultimodalRetriever:
             query_embeddings.append(self.model.encode([self.entity2text[head]], convert_to_tensor=True, show_progress_bar=False))
             query_embeddings.append(self.model.encode([self.entity2text[tail]], convert_to_tensor=True, show_progress_bar=False))
             with Image.open(first_jpg_path(question, "images_subset_inference")) as im:
-                query_embeddings.append(self.model.encode([im], convert_to_tensor=True, show_progress_bar=False))
+                query_embeddings.append(self.model.encode([im.convert("RGB")], convert_to_tensor=True, show_progress_bar=False))
 
         if mode == 1:
             with Image.open(first_jpg_path(head, "images_subset_inference")) as im:
-                query_embeddings.append(self.model.encode([im], convert_to_tensor=True, show_progress_bar=False))
+                query_embeddings.append(self.model.encode([im.convert("RGB")], convert_to_tensor=True, show_progress_bar=False))
             with Image.open(first_jpg_path(tail, "images_subset_inference")) as im:
-                query_embeddings.append(self.model.encode([im], convert_to_tensor=True, show_progress_bar=False))
+                query_embeddings.append(self.model.encode([im.convert("RGB")], convert_to_tensor=True, show_progress_bar=False))
             query_embeddings.append(self.model.encode([self.entity2text[question]], convert_to_tensor=True, show_progress_bar=False))
 
         if mode == 2:
             with Image.open(first_jpg_path(head, "images_subset_inference")) as im:
-                query_embeddings.append(self.model.encode([im], convert_to_tensor=True, show_progress_bar=False))
+                query_embeddings.append(self.model.encode([im.convert("RGB")], convert_to_tensor=True, show_progress_bar=False))
             query_embeddings.append(self.model.encode([self.entity2text[tail]], convert_to_tensor=True, show_progress_bar=False))
             with Image.open(first_jpg_path(question, "images_subset_inference")) as im:
-                query_embeddings.append(self.model.encode([im], convert_to_tensor=True, show_progress_bar=False))
+                query_embeddings.append(self.model.encode([im.convert("RGB")], convert_to_tensor=True, show_progress_bar=False))
 
         query_embedding = torch.stack(query_embeddings, dim = 0).mean(dim = 0)
         query_embedding = torch.nn.functional.normalize(query_embedding, p=2, dim=1)  
