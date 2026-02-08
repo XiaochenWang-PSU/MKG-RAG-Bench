@@ -1,4 +1,4 @@
-# KG-MMRAG
+# MKG-RAG-Bench
 A repo for sharing codes concerning multimodal retrieval-augmented generation with knowledge graph.
 
 ## ScienceQA Folder
