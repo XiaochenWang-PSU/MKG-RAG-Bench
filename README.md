@@ -7,7 +7,7 @@ In this repo, we provide materials for the paper "MKG-RAG-Bench: Benchmarking Re
 
 ## Datasets
 
-We provide two subsets in this study, i.e., MKG-Bench-G and MKG-Bench-M, representing the multimodal knowledge graph RAG datasets for general and medical domains. 
+We provide two subsets in this study, i.e., MKG-RAG-Bench-G and MKG-RAG-Bench-M, representing the multimodal knowledge graph RAG datasets for general and medical domains. 
 
 The datasets are splited into train/val/test sets with the ratio of 8:1:1, supporting comprehensive evaluation on stage of retrieval and generation.
 
