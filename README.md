@@ -1,6 +1,22 @@
 
+
+
+
 # MKG-RAG-Bench
-A repo for sharing codes concerning multimodal retrieval-augmented generation with knowledge graph.
+In this repo, we provide materials for the paper "MKG-RAG-Bench: Benchmarking Retrieval in Multimodal Knowledge Graph–Augmented Generation". 
+
+## Datasets
+
+We provide two subsets in this study, i.e., MKG-Bench-G and MKG-Bench-M, representing the multimodal knowledge graph RAG datasets for general and medical domains. 
+
+The datasets are splited into train/val/test sets with the ratio of 8:1:1, supporting comprehensive evaluation on stage of retrieval and generation.
+
+## Baselines
+
+The objective of retrieval evaluation is to assess the effectiveness of different retrieval techniques including text-only retrievers,fusion-based multimodal retrievers, captioning-based retrievers, and reranking-based retrievers. In addition, we include a basic random retriever as a simple lower-bound baseline for the retrieval task. For fair comparison, all retrievers are implemented using a shared CLIP encoder to obtain unified representations. Additionally, the captioning-based retrievers are implemented with a BLIP model. Both queries and candidate triplets are embedded into the same representation space, and candidates are ranked based on cosine similarity. We report standard retrieval metrics, including NDCG@𝐾, Precision@𝐾, and Recall@𝐾 in the main experiments.
+
+
+<!--
 
 ## ScienceQA Folder
 Reference: [https://github.com/lupantech/ScienceQA](https://github.com/lupantech/ScienceQA)
@@ -25,6 +41,9 @@ Please remember to change `test_number` in `args` to -1 in `run_gpt.py` and `run
 Note:
 - `run_gpt.py` use image's caption as input.
 - `run_multimodal_gpt.py` use image as input.
+
+
+
 
 ## MedicalVQA Folder
 Reference: [https://github.com/XiaochenWang-PSU/MedMKG](https://github.com/XiaochenWang-PSU/MedMKG)
@@ -79,14 +98,12 @@ python3 run_gpt.py
 - Fact-Aware Multimodal Retrieval Augmentation for Accurate Medical Radiology Report Generation [[Paper](https://arxiv.org/pdf/2407.15268)][[Code](https://github.com/cxcscmu/FactMM-RAG)]: [RadGraph](https://arxiv.org/abs/2106.14463) is used to annotate reports and mine factually consistent pairs, which are then employed to train a [MARVEL](https://arxiv.org/abs/2310.14037)-based multimodal retriever with contrastive learning to align images and text. At inference, given a new chest X-ray, the retriever selects the most factually relevant report, and both the image and retrieved report are passed into LLaVA for retrieval-augmented generation, improving factual correctness in the final radiology report.
 
 
-<!--
-
-
-
-# MKG-RAG-Bench
-In this repo, we provide materials for the paper "MKG-RAG-Bench: Benchmarking Retrieval in Multimodal Knowledge Graph–Augmented Generation". 
-
 -->
+
+
+
+
+
 
 
 
