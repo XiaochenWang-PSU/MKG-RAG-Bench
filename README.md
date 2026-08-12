@@ -20,7 +20,6 @@ The datasets are splited into train/val/test sets with the ratio of 8:1:1, suppo
 
 The objective of retrieval evaluation is to assess the effectiveness of different retrieval techniques including text-only retrievers,fusion-based multimodal retrievers, captioning-based retrievers, and reranking-based retrievers. In addition, we include a basic random retriever as a simple lower-bound baseline for the retrieval task. For fair comparison, all retrievers are implemented using a shared CLIP encoder to obtain unified representations. Additionally, the captioning-based retrievers are implemented with a BLIP model. Both queries and candidate triplets are embedded into the same representation space, and candidates are ranked based on cosine similarity. We report standard retrieval metrics, including NDCG@𝐾, Precision@𝐾, and Recall@𝐾 in the main experiments.
 
-## Presnetaion
 <!--
 
 ## ScienceQA Folder
